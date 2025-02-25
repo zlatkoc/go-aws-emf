@@ -24,20 +24,15 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
-          CHANGELOG=$(git log --pretty=format:"* %s" $PREVIOUS_TAG..HEAD)
-          echo "changelog=$CHANGELOG" >> $GITHUB_ENV
+      # Skip changelog generation for now - we'll add it back later
 
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           body: |
-            ## Changes
-            ${{ env.changelog }}
+            ## Initial Release
+            First release of go-aws-emf library.
 
             ## Usage
             ```go
