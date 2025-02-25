@@ -27,9 +27,9 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          git log --pretty=format:"* %s (%an)" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          CHANGELOG=$(git log --pretty=format:"* %s" $PREVIOUS_TAG..HEAD)
+          echo "changelog=$CHANGELOG" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         id: create_release
@@ -37,7 +37,7 @@ jobs:
         with:
           body: |
             ## Changes
-            ${{ steps.changelog.outputs.changelog }}
+            ${{ env.changelog }}
 
             ## Usage
             ```go
