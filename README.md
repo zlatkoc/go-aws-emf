@@ -2,6 +2,11 @@
 
 A simple Go library for creating AWS CloudWatch Embedded Metric Format (EMF) formatted logs.
 
+[![Go](https://github.com/zlatkoc/go-aws-emf/actions/workflows/go.yml/badge.svg)](https://github.com/zlatkoc/go-aws-emf/actions/workflows/go.yml)
+[![codecov](https://codecov.io/gh/zlatkoc/go-aws-emf/branch/main/graph/badge.svg)](https://codecov.io/gh/zlatkoc/go-aws-emf)
+[![Go Reference](https://pkg.go.dev/badge/github.com/zlatkoc/go-aws-emf.svg)](https://pkg.go.dev/github.com/zlatkoc/go-aws-emf)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Overview
 
 The AWS CloudWatch Embedded Metric Format (EMF) is a JSON specification that enables you to embed custom metrics alongside detailed log event data. This library provides a simple way to create EMF-formatted logs in Go with minimal dependencies.
@@ -154,9 +159,15 @@ UnitNone
 - Comprehensive test suite
 - Minimal dependencies (uses only standard library)
 
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/). For the versions available, see the [tags on this repository](https://github.com/zlatkoc/go-aws-emf/tags).
+
+See [VERSIONING.md](VERSIONING.md) for more details on our versioning policy.
+
 ## Credits
 
-This library was primarily developed by Anthropic Claude Sonnet 3.7 v1, which designed the architecture, implemented the code, created the tests, and structured the project. The human author provided requirements, feedback, and guidance. The total AI development cost was $1.97.
+This library was primarily developed by Anthropic Claude Sonnet 3.7 v1, which designed the architecture, implemented the code, created the tests, and structured the project. The human author provided requirements, feedback, and guidance.
 
 ## License
 
