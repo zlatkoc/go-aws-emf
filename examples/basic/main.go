@@ -20,10 +20,10 @@ func main() {
 	// Add metrics
 	metricLog.PutMetric("Latency", 42.0, emf.UnitMilliseconds)
 	metricLog.PutMetric("RequestCount", 1, emf.UnitCount)
-	
+
 	// Add a high-resolution metric
 	metricLog.PutMetricWithResolution("DetailedLatency", 12.3, emf.UnitMilliseconds, emf.StorageResolutionHigh)
-	
+
 	// Get the JSON representation
 	jsonStr := metricLog.String()
 	fmt.Println("Generated EMF:")

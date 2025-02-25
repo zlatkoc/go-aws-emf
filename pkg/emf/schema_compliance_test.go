@@ -46,22 +46,22 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 				ml.PutDimension("Service", "Orders")
 				ml.PutDimension("Region", "us-west-2")
 				ml.PutDimension("Environment", "Production")
-				
+
 				ml.WithDimensionSet([]string{"Service"})
 				ml.WithDimensionSet([]string{"Service", "Region"})
 				ml.WithDimensionSet([]string{"Service", "Environment"})
-				
+
 				ml.PutMetric("ProcessingTime", 123.45, UnitMilliseconds)
 				ml.PutMetric("SuccessCount", 100, UnitCount)
 				ml.PutMetric("FailureCount", 5, UnitCount)
 				ml.PutMetricWithResolution("HighResTime", 10.5, UnitMilliseconds, StorageResolutionHigh)
-				
+
 				ml.Builder().
 					Property("OrderId", "ord-12345").
 					Property("CustomerId", "cust-6789").
 					Property("Status", "Completed").
 					Build()
-				
+
 				return ml
 			},
 		},
@@ -69,7 +69,7 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 			name: "maximum dimensions",
 			generateLog: func() *MetricLog {
 				ml := NewMetricLog("MaxDimTest")
-				
+
 				// Add the maximum allowed dimensions (30)
 				dimensionNames := make([]string, MaxDimensionSetSize)
 				for i := 0; i < MaxDimensionSetSize; i++ {
@@ -77,10 +77,10 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 					dimensionNames[i] = dimName
 					ml.PutDimension(dimName, "Value"+string(rune('A'+i)))
 				}
-				
+
 				ml.WithDimensionSet(dimensionNames)
 				ml.PutMetric("TestMetric", 1.0, UnitCount)
-				
+
 				return ml
 			},
 		},
@@ -90,7 +90,7 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 				ml := NewMetricLog("AllUnitsTest")
 				ml.PutDimension("Service", "API")
 				ml.WithDimensionSet([]string{"Service"})
-				
+
 				// Add all supported unit types
 				units := []string{
 					UnitSeconds, UnitMicroseconds, UnitMilliseconds,
@@ -101,11 +101,11 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 					UnitBitsPerSecond, UnitKbitsPerSecond, UnitMbitsPerSecond, UnitGbitsPerSecond, UnitTbitsPerSecond,
 					UnitCountPerSecond, UnitNone,
 				}
-				
+
 				for i, unit := range units {
 					ml.PutMetric("Metric"+string(rune('A'+i)), float64(i), unit)
 				}
-				
+
 				return ml
 			},
 		},
@@ -116,13 +116,13 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Generate the EMF log
 			ml := tc.generateLog()
-			
+
 			// Convert to JSON
 			jsonBytes, err := ml.MarshalJSON()
 			if err != nil {
 				t.Fatalf("Failed to marshal EMF log to JSON: %v", err)
 			}
-			
+
 			// Print the JSON for debugging
 			if testing.Verbose() {
 				var pretty bytes.Buffer
@@ -130,16 +130,16 @@ func TestComplianceWithEmfFormat(t *testing.T) {
 					t.Logf("Generated EMF JSON:\n%s", pretty.String())
 				}
 			}
-			
+
 			// Create a document loader for the generated JSON
 			documentLoader := gojsonschema.NewStringLoader(string(jsonBytes))
-			
+
 			// Validate against the schema
 			result, err := schema.Validate(documentLoader)
 			if err != nil {
 				t.Fatalf("Schema validation error: %v", err)
 			}
-			
+
 			// Check if validation passed
 			if !result.Valid() {
 				var errDetails string

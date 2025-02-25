@@ -17,7 +17,7 @@ type MetricLog struct {
 // NewMetricLog creates a new EMF metric log with the given namespace.
 func NewMetricLog(namespace string) *MetricLog {
 	timestamp := time.Now().UnixMilli()
-	
+
 	// Initialize with default values
 	emf := EmfFormatJson{
 		Aws: EmfFormatJsonAws{
@@ -31,7 +31,7 @@ func NewMetricLog(namespace string) *MetricLog {
 			},
 		},
 	}
-	
+
 	return &MetricLog{
 		emf:     emf,
 		metrics: make(map[string]interface{}),
@@ -59,15 +59,15 @@ func (ml *MetricLog) PutDimension(key, value string) *MetricLog {
 // PutMetric adds a metric with the given name and value to the log.
 func (ml *MetricLog) PutMetric(name string, value interface{}, unit string) *MetricLog {
 	ml.metrics[name] = value
-	
+
 	unitPtr := &unit
-	
+
 	directive := &ml.emf.Aws.CloudWatchMetrics[0]
 	metricDef := EmfFormatJsonAwsCloudWatchMetricsElemMetricsElem{
 		Name: name,
 		Unit: unitPtr,
 	}
-	
+
 	directive.Metrics = append(directive.Metrics, metricDef)
 	return ml
 }
@@ -75,17 +75,17 @@ func (ml *MetricLog) PutMetric(name string, value interface{}, unit string) *Met
 // PutMetricWithResolution adds a metric with the given name, value, unit and storage resolution to the log.
 func (ml *MetricLog) PutMetricWithResolution(name string, value interface{}, unit string, resolution int) *MetricLog {
 	ml.metrics[name] = value
-	
+
 	unitPtr := &unit
 	resolutionPtr := &resolution
-	
+
 	directive := &ml.emf.Aws.CloudWatchMetrics[0]
 	metricDef := EmfFormatJsonAwsCloudWatchMetricsElemMetricsElem{
 		Name:              name,
 		Unit:              unitPtr,
 		StorageResolution: resolutionPtr,
 	}
-	
+
 	directive.Metrics = append(directive.Metrics, metricDef)
 	return ml
 }
@@ -96,18 +96,18 @@ func (ml *MetricLog) MarshalJSON() ([]byte, error) {
 	if err := ml.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// Create a map that combines both the EMF format and metrics
 	combinedMap := make(map[string]interface{})
-	
+
 	// Add the _aws field
 	combinedMap["_aws"] = ml.emf.Aws
-	
+
 	// Add all metrics and dimensions
 	for k, v := range ml.metrics {
 		combinedMap[k] = v
 	}
-	
+
 	return json.Marshal(combinedMap)
 }
 

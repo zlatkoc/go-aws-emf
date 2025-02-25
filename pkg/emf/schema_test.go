@@ -13,36 +13,36 @@ import (
 // loadJSONSchema loads the EMF JSON schema from the given file path
 func loadJSONSchema(t *testing.T) *gojsonschema.Schema {
 	t.Helper()
-	
+
 	schemaPath := filepath.Join(".", "emf-format.json")
 	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
 		t.Fatalf("Failed to read JSON schema file: %v", err)
 	}
-	
+
 	// Load the JSON schema
 	schemaLoader := gojsonschema.NewStringLoader(string(schemaBytes))
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {
 		t.Fatalf("Failed to load JSON schema: %v", err)
 	}
-	
+
 	return schema
 }
 
 // validateAgainstSchema validates the given JSON against the EMF JSON schema
 func validateAgainstSchema(t *testing.T, jsonBytes []byte, schema *gojsonschema.Schema) {
 	t.Helper()
-	
+
 	// Load the JSON data
 	documentLoader := gojsonschema.NewStringLoader(string(jsonBytes))
-	
+
 	// Validate against the schema
 	result, err := schema.Validate(documentLoader)
 	if err != nil {
 		t.Fatalf("Error validating JSON: %v", err)
 	}
-	
+
 	// Check validation result
 	if !result.Valid() {
 		var errMsg string
@@ -59,7 +59,7 @@ func validateAgainstSchema(t *testing.T, jsonBytes []byte, schema *gojsonschema.
 // TestJsonSchemaValidation tests that the generated JSON conforms to the EMF schema
 func TestJsonSchemaValidation(t *testing.T) {
 	schema := loadJSONSchema(t)
-	
+
 	tests := []struct {
 		name     string
 		setup    func() *MetricLog
@@ -130,12 +130,12 @@ func TestJsonSchemaValidation(t *testing.T) {
 				if data["ApiLatency"] != 12.3 {
 					t.Errorf("Expected ApiLatency to be 12.3, got %v", data["ApiLatency"])
 				}
-				
+
 				// Verify the storage resolution in the CloudWatchMetrics section
 				aws := data["_aws"].(map[string]interface{})
 				metrics := aws["CloudWatchMetrics"].([]interface{})[0].(map[string]interface{})
 				metricDefs := metrics["Metrics"].([]interface{})
-				
+
 				found := false
 				for _, m := range metricDefs {
 					metric := m.(map[string]interface{})
@@ -146,7 +146,7 @@ func TestJsonSchemaValidation(t *testing.T) {
 						}
 					}
 				}
-				
+
 				if !found {
 					t.Error("Expected to find ApiLatency metric definition")
 				}
@@ -158,7 +158,7 @@ func TestJsonSchemaValidation(t *testing.T) {
 				ml := NewMetricLog("AllUnitsTest")
 				ml.PutDimension("Service", "API")
 				ml.WithDimensionSet([]string{"Service"})
-				
+
 				units := []string{
 					UnitSeconds, UnitMicroseconds, UnitMilliseconds,
 					UnitBytes, UnitKilobytes, UnitMegabytes, UnitGigabytes, UnitTerabytes,
@@ -168,18 +168,18 @@ func TestJsonSchemaValidation(t *testing.T) {
 					UnitBitsPerSecond, UnitKbitsPerSecond, UnitMbitsPerSecond, UnitGbitsPerSecond, UnitTbitsPerSecond,
 					UnitCountPerSecond, UnitNone,
 				}
-				
+
 				for i, unit := range units {
 					ml.PutMetric(fmt.Sprintf("Metric%d", i), float64(i), unit)
 				}
-				
+
 				return ml
 			},
 			expected: func(t *testing.T, data map[string]interface{}) {
 				aws := data["_aws"].(map[string]interface{})
 				metrics := aws["CloudWatchMetrics"].([]interface{})[0].(map[string]interface{})
 				metricDefs := metrics["Metrics"].([]interface{})
-				
+
 				if len(metricDefs) != 27 {
 					t.Errorf("Expected 27 metric definitions, got %d", len(metricDefs))
 				}
@@ -221,26 +221,26 @@ func TestJsonSchemaValidation(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ml := test.setup()
-			
+
 			// Marshal to JSON
 			jsonBytes, err := ml.MarshalJSON()
 			if err != nil {
 				t.Fatalf("Error marshaling to JSON: %v", err)
 			}
-			
+
 			// Validate against schema
 			validateAgainstSchema(t, jsonBytes, schema)
-			
+
 			// Also validate the data structure
 			var data map[string]interface{}
 			if err := json.Unmarshal(jsonBytes, &data); err != nil {
 				t.Fatalf("Error parsing JSON: %v", err)
 			}
-			
+
 			// Run expected validations
 			test.expected(t, data)
 		})
@@ -250,7 +250,7 @@ func TestJsonSchemaValidation(t *testing.T) {
 // TestSchemaValidationWithComplexData tests complex scenarios and edge cases
 func TestSchemaValidationWithComplexData(t *testing.T) {
 	schema := loadJSONSchema(t)
-	
+
 	tests := []struct {
 		name     string
 		setup    func() *MetricLog
@@ -260,7 +260,7 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 			name: "maximum dimensions",
 			setup: func() *MetricLog {
 				ml := NewMetricLog("MaxDimensionsTest")
-				
+
 				// Add the maximum allowed dimensions (30)
 				dimensionNames := make([]string, MaxDimensionSetSize)
 				for i := 0; i < MaxDimensionSetSize; i++ {
@@ -268,17 +268,17 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 					dimensionNames[i] = dimName
 					ml.PutDimension(dimName, fmt.Sprintf("Value%d", i))
 				}
-				
+
 				ml.WithDimensionSet(dimensionNames)
 				ml.PutMetric("TestMetric", 1.0, UnitCount)
-				
+
 				return ml
 			},
 			expected: func(t *testing.T, data map[string]interface{}) {
 				aws := data["_aws"].(map[string]interface{})
 				metrics := aws["CloudWatchMetrics"].([]interface{})[0].(map[string]interface{})
 				dimensions := metrics["Dimensions"].([]interface{})[0].([]interface{})
-				
+
 				if len(dimensions) != MaxDimensionSetSize {
 					t.Errorf("Expected %d dimensions, got %d", MaxDimensionSetSize, len(dimensions))
 				}
@@ -288,29 +288,29 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 			name: "multiple dimension sets",
 			setup: func() *MetricLog {
 				ml := NewMetricLog("MultiDimSetsTest")
-				
+
 				// Add dimensions
 				ml.PutDimension("Service", "API")
 				ml.PutDimension("Region", "us-west-2")
 				ml.PutDimension("Environment", "Production")
 				ml.PutDimension("Host", "server-123")
-				
+
 				// Add multiple dimension sets for different rollup views
 				ml.WithDimensionSet([]string{"Service"})
 				ml.WithDimensionSet([]string{"Service", "Region"})
 				ml.WithDimensionSet([]string{"Service", "Environment"})
 				ml.WithDimensionSet([]string{"Service", "Host"})
 				ml.WithDimensionSet([]string{"Service", "Region", "Environment"})
-				
+
 				ml.PutMetric("Latency", 42.0, UnitMilliseconds)
-				
+
 				return ml
 			},
 			expected: func(t *testing.T, data map[string]interface{}) {
 				aws := data["_aws"].(map[string]interface{})
 				metrics := aws["CloudWatchMetrics"].([]interface{})[0].(map[string]interface{})
 				dimensions := metrics["Dimensions"].([]interface{})
-				
+
 				if len(dimensions) != 5 {
 					t.Errorf("Expected 5 dimension sets, got %d", len(dimensions))
 				}
@@ -322,14 +322,14 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 				ml := NewMetricLog("MixedTypesTest")
 				ml.PutDimension("Service", "API")
 				ml.WithDimensionSet([]string{"Service"})
-				
+
 				// Add various metric types
 				ml.PutMetric("IntMetric", 42, UnitCount)
 				ml.PutMetric("FloatMetric", 42.5, UnitMilliseconds)
 				ml.PutMetric("ZeroMetric", 0, UnitCount)
 				ml.PutMetric("LargeMetric", 1000000, UnitBytes)
 				ml.PutMetric("SmallMetric", 0.0001, UnitSeconds)
-				
+
 				return ml
 			},
 			expected: func(t *testing.T, data map[string]interface{}) {
@@ -357,7 +357,7 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 				ml.PutDimension("Service", "API")
 				ml.WithDimensionSet([]string{"Service"})
 				ml.PutMetric("Latency", 42.0, UnitMilliseconds)
-				
+
 				// Add custom properties using the builder
 				ml.Builder().
 					Property("RequestId", "req-123").
@@ -367,7 +367,7 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 					Property("NullProperty", nil).
 					Property("NumberProperty", 12345).
 					Build()
-				
+
 				return ml
 			},
 			expected: func(t *testing.T, data map[string]interface{}) {
@@ -386,26 +386,26 @@ func TestSchemaValidationWithComplexData(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ml := test.setup()
-			
+
 			// Marshal to JSON
 			jsonBytes, err := ml.MarshalJSON()
 			if err != nil {
 				t.Fatalf("Error marshaling to JSON: %v", err)
 			}
-			
+
 			// Validate against schema
 			validateAgainstSchema(t, jsonBytes, schema)
-			
+
 			// Also validate the data structure
 			var data map[string]interface{}
 			if err := json.Unmarshal(jsonBytes, &data); err != nil {
 				t.Fatalf("Error parsing JSON: %v", err)
 			}
-			
+
 			// Run expected validations
 			test.expected(t, data)
 		})

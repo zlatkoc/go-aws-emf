@@ -30,7 +30,7 @@ func (ml *MetricLog) Validate() error {
 	if len(directive.Dimensions) < MinDimensions {
 		return fmt.Errorf("at least one dimension set must be defined")
 	}
-	
+
 	// Check that no dimension set is empty
 	for i, dimSet := range directive.Dimensions {
 		if len(dimSet) == 0 {
@@ -62,7 +62,7 @@ func (ml *MetricLog) Validate() error {
 		// Validate storage resolution if provided
 		if metric.StorageResolution != nil {
 			if *metric.StorageResolution != StorageResolutionStandard && *metric.StorageResolution != StorageResolutionHigh {
-				return fmt.Errorf("invalid storage resolution for metric '%s'. Must be either %d (standard) or %d (high resolution)", 
+				return fmt.Errorf("invalid storage resolution for metric '%s'. Must be either %d (standard) or %d (high resolution)",
 					metric.Name, StorageResolutionStandard, StorageResolutionHigh)
 			}
 		}

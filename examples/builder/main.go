@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"github.com/zlatkoc/go-aws-emf/pkg/emf"
+	"time"
 )
 
 func main() {
 	// Create a new metric log with a namespace
 	metricLog := emf.NewMetricLog("MyApplicationMetrics")
-	
+
 	// Use the builder pattern
 	metricLog.Builder().
 		Dimension("ServiceName", "UserService").
@@ -22,7 +22,7 @@ func main() {
 		Property("RequestId", "12345").
 		Property("Timestamp", time.Now().String()).
 		Build()
-	
+
 	// Get the JSON representation
 	jsonStr := metricLog.String()
 	fmt.Println("Generated EMF with Builder:")

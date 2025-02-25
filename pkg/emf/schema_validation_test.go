@@ -71,7 +71,7 @@ func TestEdgeCaseValidation(t *testing.T) {
 			name: "too many dimensions in set",
 			setup: func() *MetricLog {
 				ml := NewMetricLog("TestNamespace")
-				
+
 				// Create more than the maximum allowed dimensions in a set (30)
 				dimensionNames := make([]string, MaxDimensionSetSize+1)
 				for i := 0; i <= MaxDimensionSetSize; i++ {
@@ -79,7 +79,7 @@ func TestEdgeCaseValidation(t *testing.T) {
 					dimensionNames[i] = dimName
 					ml.PutDimension(dimName, "Value")
 				}
-				
+
 				ml.WithDimensionSet(dimensionNames)
 				ml.PutMetric("Latency", 42.0, UnitMilliseconds)
 				return ml
@@ -140,7 +140,7 @@ func TestEdgeCaseValidation(t *testing.T) {
 				ml := NewMetricLog("TestNamespace")
 				ml.PutDimension("Service", "API")
 				ml.WithDimensionSet([]string{"Service"})
-				
+
 				// Add a metric definition but not the value
 				directive := &ml.emf.Aws.CloudWatchMetrics[0]
 				metricDef := EmfFormatJsonAwsCloudWatchMetricsElemMetricsElem{
@@ -148,7 +148,7 @@ func TestEdgeCaseValidation(t *testing.T) {
 					Unit: stringPtr(UnitMilliseconds),
 				}
 				directive.Metrics = append(directive.Metrics, metricDef)
-				
+
 				return ml
 			},
 			expectedError: true,
@@ -160,21 +160,21 @@ func TestEdgeCaseValidation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ml := test.setup()
 			err := ml.Validate()
-			
+
 			if test.expectedError && err == nil {
 				t.Fatal("Expected validation error, but got nil")
 			}
-			
+
 			if !test.expectedError && err != nil {
 				t.Fatalf("Expected no validation error, but got: %v", err)
 			}
-			
+
 			if test.expectedError && err != nil {
 				if test.errorContains != "" && !contains(err.Error(), test.errorContains) {
 					t.Errorf("Expected error to contain '%s', but got: %v", test.errorContains, err)
 				}
 			}
-			
+
 			// If a validation error is expected, try marshaling which should also fail
 			if test.expectedError {
 				_, err = ml.MarshalJSON()
@@ -190,11 +190,11 @@ func TestEdgeCaseValidation(t *testing.T) {
 func TestJSONOutput(t *testing.T) {
 	ml := NewMetricLog("OutputTest")
 	ml.emf.Aws.Timestamp = 1600000000000 // Set a fixed timestamp for testing
-	
+
 	ml.PutDimension("Service", "API")
 	ml.WithDimensionSet([]string{"Service"})
 	ml.PutMetric("Latency", 42.0, UnitMilliseconds)
-	
+
 	// Add some property values of different types
 	ml.Builder().
 		Property("IntValue", 123).
@@ -203,58 +203,58 @@ func TestJSONOutput(t *testing.T) {
 		Property("StringValue", "test").
 		Property("NullValue", nil).
 		Build()
-	
+
 	jsonData, err := ml.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Error marshaling to JSON: %v", err)
 	}
-	
+
 	var data map[string]interface{}
 	if err := json.Unmarshal(jsonData, &data); err != nil {
 		t.Fatalf("Error parsing JSON: %v", err)
 	}
-	
+
 	// Test property values
 	if data["IntValue"] != float64(123) {
 		t.Errorf("Expected IntValue to be 123, got %v (%T)", data["IntValue"], data["IntValue"])
 	}
-	
+
 	if data["FloatValue"] != 123.456 {
 		t.Errorf("Expected FloatValue to be 123.456, got %v", data["FloatValue"])
 	}
-	
+
 	if data["BoolValue"] != true {
 		t.Errorf("Expected BoolValue to be true, got %v", data["BoolValue"])
 	}
-	
+
 	if data["StringValue"] != "test" {
 		t.Errorf("Expected StringValue to be 'test', got %v", data["StringValue"])
 	}
-	
+
 	if _, exists := data["NullValue"]; !exists {
 		t.Error("Expected NullValue to exist in JSON")
 	}
-	
+
 	// Check the _aws structure
 	aws, ok := data["_aws"].(map[string]interface{})
 	if !ok {
 		t.Fatal("Expected _aws to be a map")
 	}
-	
+
 	if aws["Timestamp"] != float64(1600000000000) {
 		t.Errorf("Expected Timestamp to be 1600000000000, got %v", aws["Timestamp"])
 	}
-	
+
 	metrics, ok := aws["CloudWatchMetrics"].([]interface{})
 	if !ok || len(metrics) == 0 {
 		t.Fatal("Expected CloudWatchMetrics to be a non-empty array")
 	}
-	
+
 	metricData, ok := metrics[0].(map[string]interface{})
 	if !ok {
 		t.Fatal("Expected CloudWatchMetrics[0] to be a map")
 	}
-	
+
 	if metricData["Namespace"] != "OutputTest" {
 		t.Errorf("Expected Namespace to be OutputTest, got %v", metricData["Namespace"])
 	}
