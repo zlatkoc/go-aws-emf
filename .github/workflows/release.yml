@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     name: Create Release
@@ -12,8 +15,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -24,12 +25,9 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      # Skip changelog generation for now - we'll add it back later
-
       - name: Create GitHub Release
-        id: create_release
-        uses: googleapis/release-please-action@v4
+        uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: go
-          skip-github-pull-request: true
+          allowUpdates: true
+          generateReleaseNotes: true
+          name: Release ${{ github.ref_name }}
