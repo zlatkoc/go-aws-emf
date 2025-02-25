@@ -32,4 +32,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: go
-          target-branch: ${{ github.ref_name }}
+          skip-github-pull-request: true
